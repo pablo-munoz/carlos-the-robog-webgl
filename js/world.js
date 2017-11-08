@@ -218,138 +218,133 @@ const terrainFactory = (options) => {
   });
 }
 
-const worldFactory = (options) => {
-  const {
-    robotOptions,
-    terrainOptions,
-    homeElement
-  } = options;
+const worldFactory = options => {
+        const { robotOptions, terrainOptions, homeElement } = options;
 
-  const scene = new THREE.Scene();
+        const scene = new THREE.Scene();
 
-  const renderer =  new THREE.WebGLRenderer();
-  renderer.setSize(homeElement.clientWidth, homeElement.clientHeight);
-  document.getElementById('canvas-area').appendChild(renderer.domElement);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setClearColor(0x000000, 0);
+        renderer.setSize(homeElement.clientWidth, homeElement.clientHeight);
+        document
+          .getElementById("canvas-area")
+          .appendChild(renderer.domElement);
 
-  const camera = new THREE.PerspectiveCamera(
-    75, homeElement.clientWidth / homeElement.clientHeight, 0.1, 1000);
-  camera.position.z = 15;
-  camera.position.y = 7.5;
-  camera.position.x = 7.5;
-  camera.lookAt(new THREE.Vector3(7.5, 7.5, 0));
+        const camera = new THREE.PerspectiveCamera(75, homeElement.clientWidth / homeElement.clientHeight, 0.1, 1000);
+        camera.position.z = 15;
+        camera.position.y = 7.5;
+        camera.position.x = 7.5;
+        camera.lookAt(new THREE.Vector3(7.5, 7.5, 0));
 
-  const robot = robotFactory(robotOptions);
-  robot.addToScene(scene);
+        const robot = robotFactory(robotOptions);
+        robot.addToScene(scene);
 
-  const terrain = terrainFactory(terrainOptions);
-  terrain.addToScene(scene);
+        const terrain = terrainFactory(terrainOptions);
+        terrain.addToScene(scene);
 
-  const INSTRUCTION_SET = new WeakMap();
+        const INSTRUCTION_SET = new WeakMap();
 
-  INSTRUCTION_SET[MOVE_FORWARD] = timeSmoothUnaryFunctionFactory(robot.move, 1);
-  INSTRUCTION_SET[TURN_RIGHT] = callableOnlyOnceFunctionFactory(robot.turnRight);
-  INSTRUCTION_SET[TURN_LEFT] = callableOnlyOnceFunctionFactory(robot.turnLeft);
-  INSTRUCTION_SET[GOTO] = callableOnlyOnceFunctionFactory(
-    (args) => programCounter = +args[0] - 1);
+        INSTRUCTION_SET[MOVE_FORWARD] = timeSmoothUnaryFunctionFactory(robot.move, 1);
+        INSTRUCTION_SET[TURN_RIGHT] = callableOnlyOnceFunctionFactory(robot.turnRight);
+        INSTRUCTION_SET[TURN_LEFT] = callableOnlyOnceFunctionFactory(robot.turnLeft);
+        INSTRUCTION_SET[GOTO] = callableOnlyOnceFunctionFactory(args => (programCounter = +args[0] - 1));
 
-  const render = () => {
-    renderer.render(scene, camera);
-  }
+        const render = () => {
+          renderer.render(scene, camera);
+        };
 
-  let instructions = []; // The name of the instructions
-  let programCounter = -1; // The index of the instruction being executed
-  let currentInstruction = _.noop;
-  let currentInstructionArgs = [];
+        let instructions = []; // The name of the instructions
+        let programCounter = -1; // The index of the instruction being executed
+        let currentInstruction = _.noop;
+        let currentInstructionArgs = [];
 
-  const run = (callback) => {
-    // Begins the animation loop of the world.
-    //
-    // callback is a function that will be called at the end of each
-    //   1 second period and will be given the names of the instructions being
-    //   executed and the index of the one that is currently being executed.
-    //
-    //
-    // In order to improve visualization, we have determined that each program
-    // instruction will take 1 second to complete (in the future we could make this
-    // a configurable --speed-- value). This poses some challenges.
-    // For example, one action can be "move an object one unit forward", so
-    // during each frame within the 1 second period that corresponds to the
-    // action, we want to move the distance proportional to the time that has
-    // passed since the last frame, e.g., if this frame is 16 milliseconds after
-    // the one before it, the graphics are 16 milliseconds out of date, and we
-    // should move the object forward by 16/1000 of the total distance it will move.
-    //
-    // It has been established that the program instructions will need to consume
-    // the time that has passed since the previous frame so that they may act
-    // proportionally.
-    //
-    // There is also the issue that not all program instructions can be "amortized"
-    // during a time period. For example, the "turn right" instruction happens
-    // instantly, and it would be an error to keep calling the turnRight method
-    // as many times as there are frames in the 1 second that belongs to the
-    // instruction, as we may end facing in some other direction, so there is
-    // a subset of actions that we want to be executed only in the first frame
-    // of their one second period, and do nothing in the rest.
-    //
-    // In order to reduce complexity, we will utilize higher order functions
-    // to create stateful, animation frame aware instructions. See the
-    // Higher order functions section for more iformation. But basically
-    // 
-    // This function assumes compileUserScript() has been called successfully
+        const run = callback => {
+          // Begins the animation loop of the world.
+          //
+          // callback is a function that will be called at the end of each
+          //   1 second period and will be given the names of the instructions being
+          //   executed and the index of the one that is currently being executed.
+          //
+          //
+          // In order to improve visualization, we have determined that each program
+          // instruction will take 1 second to complete (in the future we could make this
+          // a configurable --speed-- value). This poses some challenges.
+          // For example, one action can be "move an object one unit forward", so
+          // during each frame within the 1 second period that corresponds to the
+          // action, we want to move the distance proportional to the time that has
+          // passed since the last frame, e.g., if this frame is 16 milliseconds after
+          // the one before it, the graphics are 16 milliseconds out of date, and we
+          // should move the object forward by 16/1000 of the total distance it will move.
+          //
+          // It has been established that the program instructions will need to consume
+          // the time that has passed since the previous frame so that they may act
+          // proportionally.
+          //
+          // There is also the issue that not all program instructions can be "amortized"
+          // during a time period. For example, the "turn right" instruction happens
+          // instantly, and it would be an error to keep calling the turnRight method
+          // as many times as there are frames in the 1 second that belongs to the
+          // instruction, as we may end facing in some other direction, so there is
+          // a subset of actions that we want to be executed only in the first frame
+          // of their one second period, and do nothing in the rest.
+          //
+          // In order to reduce complexity, we will utilize higher order functions
+          // to create stateful, animation frame aware instructions. See the
+          // Higher order functions section for more iformation. But basically
+          //
+          // This function assumes compileUserScript() has been called successfully
 
-    let millisecondsInCurrentPeriod = 0;
-    let then = new Date().getTime();
+          let millisecondsInCurrentPeriod = 0;
+          let then = new Date().getTime();
 
-    const animate = () => {
-      requestAnimationFrame(animate);
+          const animate = () => {
+            requestAnimationFrame(animate);
 
-      let now = new Date().getTime();
-      let millisecondsDelta = now - then;
+            let now = new Date().getTime();
+            let millisecondsDelta = now - then;
 
-      currentInstruction(millisecondsDelta, currentInstructionArgs);
+            currentInstruction(millisecondsDelta, currentInstructionArgs);
 
-      millisecondsInCurrentPeriod += millisecondsDelta;
+            millisecondsInCurrentPeriod += millisecondsDelta;
 
-      const isTimeToMoveToNextInstruction = millisecondsInCurrentPeriod > 1000;
+            const isTimeToMoveToNextInstruction = millisecondsInCurrentPeriod > 1000;
 
-      if (isTimeToMoveToNextInstruction) {
-        millisecondsInCurrentPeriod = 0;
+            if (isTimeToMoveToNextInstruction) {
+              millisecondsInCurrentPeriod = 0;
 
-        const isLastInstruction = programCounter === (instructions.length - 1);
+              const isLastInstruction = programCounter === instructions.length - 1;
 
-        if (isLastInstruction) {
-          currentInstruction = _.noop;
-        } else {
-          programCounter = programCounter + 1;
-          currentInstruction = INSTRUCTION_SET[instructions[programCounter][0]]();
-          currentInstructionArgs = instructions[programCounter].slice(1);
-          callback(instructions, programCounter);
-        }
-      }
+              if (isLastInstruction) {
+                currentInstruction = _.noop;
+              } else {
+                programCounter = programCounter + 1;
+                currentInstruction = INSTRUCTION_SET[instructions[programCounter][0]]();
+                currentInstructionArgs = instructions[programCounter].slice(1);
+                callback(instructions, programCounter);
+              }
+            }
 
-      then = now;
+            then = now;
 
-      render();
-    }
+            render();
+          };
 
-    callback(instructions, 0);
-    animate();
-  }
+          callback(instructions, 0);
+          animate();
+        };
 
-  const compileUserScript = (userScript) => {
-    // Assumes one command per line, all lines contain commands.
-    instructions = userScript.split('\n').map((statement) => statement.split(' '));
+        const compileUserScript = userScript => {
+          // Assumes one command per line, all lines contain commands.
+          instructions = userScript
+            .split("\n")
+            .map(statement => statement.split(" "));
 
-    // Assumes we will never compile an empty script
-    programCounter = 0;
+          // Assumes we will never compile an empty script
+          programCounter = 0;
 
-    currentInstruction = INSTRUCTION_SET[instructions[0][0]]();
-    currentInstructionArgs = instructions[0].slice(1);
-  }
+          currentInstruction = INSTRUCTION_SET[instructions[0][0]]();
+          currentInstructionArgs = instructions[0].slice(1);
+        };
 
-  return Object.freeze({
-    render,
-    compileUserScript,
-    run
-  });
-};
+        return Object.freeze({ render, compileUserScript, run });
+      };;
