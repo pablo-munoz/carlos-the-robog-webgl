@@ -6,37 +6,71 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
     <style>
      body {
-         margin: 0;
+         margin-top: 3rem;
+         background-image: url('https://www.jpl.nasa.gov/assets/images/content/tmp/home/missions_bg_image.jpg');
+         background-color: black;
+     }
+     
+     #canvas-area {
+         width: 600px;
+         height: 600px;
      }
 
-     #canvas-area {
-         width: 500px;
-         height: 500px;
+     #controls{
+         margin: .5rem 0 1.5rem 0;
      }
+
+     #controls>.btn{
+         margin-right: 10px;
+     }
+
+     h1{
+       color: white;
+       font-style: italic;
+       margin-bottom: 3rem;
+     }
+     
     </style>
   </head>
   <body>
-    <div class="row">
-      <div class="col-md-6">
-        <div id="canvas-area">
-          
-        </div>
+    <div class="container">
+      <div class="row">
+        <h1 >Karel the Robot Simulator</h1>
       </div>
-      <div class="col-md-6">
-        <div id="controls-area">
-          <form id="user-script-form" action="">
-            <textarea id="user-script-editor"
-                      class="form-control" rows="10"></textarea>
-            <button id="run-button" class="btn btn-primary">Run</button>
-          </form>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <div id="controls-area">
+            <form id="user-script-form" action="">
+              <div id='controls'>
+                <button id="run-button" class="btn btn-primary">Run</button>
+                <button id="stop-button" class="btn btn-danger">Stop</button>
+                <label style='color: white;' for="worldSelector"> World: </label>
+                <select name="world" id="worldSelector">
+                  <option value="0">Rock</option>
+                  <option value="1">Ice</option>
+                  <option value="2">Storm</option>
+                  <option value="3">Water</option>
+                  <option value="4">Fire</option>
+                </select>
+              </div>
+              <textarea id="user-script-editor" class="form-control" rows="17" style="resize: none;"></textarea>
+            </form>
+          </div>
+          <div id="user-script-tracer">
+      
+          </div>
         </div>
-        <div id="user-script-tracer">
-          
+        <div class="col-md-6">
+          <div id="canvas-area">
+          </div>
         </div>
       </div>
     </div>
-
+  
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="libs/jquery-linedtextarea.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
