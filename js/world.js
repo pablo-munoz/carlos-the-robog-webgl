@@ -78,8 +78,8 @@ const callableOnlyOnceFunctionFactory = (func) => {
 const robotFactory = (options) => {
   options = _.defaults({}, options, {
     directionFacingAt: NORTH,
-    initialX: 0,
-    initialY: 0,
+    initialX: .3,
+    initialY: .3,
     initialZ: 1,
     radius: 1,
     density: 32,

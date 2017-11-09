@@ -5,8 +5,10 @@ const $userScriptForm = $('#user-script-form');
 const $userScriptTracer = $('#user-script-tracer');
 const $runButton = $('#run-button');
 const $worldSelector = $('#worldSelector');
+const $numberLines = $('#numberLines');
+var lineNumber = 1;
 
-var world = worldFactory({
+const world = worldFactory({
   homeElement: canvasArea,
   scriptEditorElement: $userScriptEditor,
   terrainOptions: {
@@ -51,6 +53,22 @@ $worldSelector.change(function(){
       image: newTerrainImg
     });
 });
+
+$userScriptEditor.on('focus change keyup paste',function(event){
+    let text = $userScriptEditor.val();
+    let numberOfLineBreaks = (text.match(/\n/g) || []).length + 1;
+    let div_ = "<div style='line-height: 1.5;'>"
+    $numberLines.empty();
+    for(let i = 0; i < numberOfLineBreaks; i++){
+      $numberLines.append(div_ + (i + 1) + "</div>")
+    }
+});
+
+$userScriptEditor.scroll(function(){
+  $numberLines.scrollTop($(this).scrollTop());
+});
+
+
 
 $userScriptForm.on('submit', (event) => {
   event.preventDefault();
