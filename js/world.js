@@ -108,7 +108,7 @@ const robotFactory = (options) => {
   var material;
   if (imgPath !== ''){
     const texture =  new THREE.TextureLoader().load(imgPath); 
-    material = new THREE.MeshBasicMaterial({ map: texture });
+    material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
     texture.needsUpdate =true;
   }else{
      material = new THREE.MeshBasicMaterial({ color: initialColor });

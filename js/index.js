@@ -4,8 +4,9 @@ const $userScriptEditor = $('#user-script-editor');
 const $userScriptForm = $('#user-script-form');
 const $userScriptTracer = $('#user-script-tracer');
 const $runButton = $('#run-button');
+const $worldSelector = $('#worldSelector');
 
-const world = worldFactory({
+var world = worldFactory({
   homeElement: canvasArea,
   scriptEditorElement: $userScriptEditor,
   terrainOptions: {
@@ -39,6 +40,10 @@ function traceProgram(instructions, currentIndex) {
   instructions_ps[currentIndex].css('backgroundColor', 'green');
   instructions_ps[currentIndex].css('color', 'yellow');
 }
+
+$worldSelector.change(function(){
+  const newTerrainImg = $worldSelector.val();
+});
 
 $userScriptForm.on('submit', (event) => {
   event.preventDefault();
