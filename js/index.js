@@ -9,7 +9,8 @@ const world = worldFactory({
   homeElement: canvasArea,
   scriptEditorElement: $userScriptEditor,
   terrainOptions: {
-    terrainModel: flatTerrainModelGenerator(15, 15)
+     image: 'img/rock.png',
+     terrainModel: flatTerrainModelGenerator(15, 15),
   },
   robotOptions: {imgPath: 'img/carlos.png'}
 });

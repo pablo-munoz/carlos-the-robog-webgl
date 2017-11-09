@@ -103,15 +103,13 @@ const robotFactory = (options) => {
     directionFacingAt
   } = options;
 
-  const geometry = new THREE.SphereGeometry(radius, density, density);
-  geometry.scale(initialScale, initialScale, initialScale);
+  const geometry = new THREE.BoxGeometry(2, 2, 0);
+  geometry.scale(initialScale, initialScale, 0);
   var material;
   if (imgPath !== ''){
-    const loader =  new THREE.TextureLoader().load(imgPath, function(texture){
-          material = new THREE.MeshBasicMaterial({ map: texture});
-          texture.needsUpdate = true;
-          console.log(imgPath);  
-        }); 
+    const texture =  new THREE.TextureLoader().load(imgPath); 
+    material = new THREE.MeshBasicMaterial({ map: texture });
+    texture.needsUpdate =true;
   }else{
      material = new THREE.MeshBasicMaterial({ color: initialColor });
   }
@@ -180,14 +178,27 @@ const flatTerrainModelGenerator = (numHorizontal, numVertical) => {
 // Terrain objects are a set of blocks (cubes) whose purpose is to limit
 // the robot's movement, i.e. a robot may not pass through a cube.
 const terrainFactory = (options) => {
+   options = _.defaults({}, options, {
+     image: ""
+   });
+  
   const {
     // An array of { x: , y: , z: } (where the combination x/y/z is unique
     terrainModel,
+    image
   } = options;
-
+  console.log(image);
   const terrainCubes = terrainModel.map((cubeCoords) => {
     const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    const material = new THREE.MeshBasicMaterial( { color: 0x0000ff } );
+    var material;
+    if(image !== ""){
+       const texture = new THREE.TextureLoader().load(image);
+       material = new THREE.MeshBasicMaterial({ map: texture });
+       texture.needsUpdate = true;
+    }else{
+       material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    }
+   
     const cube = new THREE.Mesh( geometry, material );
 
     const { x, y, z } = cubeCoords;
@@ -203,7 +214,7 @@ const terrainFactory = (options) => {
   // how many cubes there are in a given path.
   const terrainCubesOutlines = terrainCubes.map((cube) => {
     const geometry = new THREE.EdgesGeometry(cube.geometry);
-    const material = new THREE.LineBasicMaterial({ color: 0x0000ff, linewidth: 2});
+    const material = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2});
     const outline = new THREE.LineSegments(geometry, material);
 
     outline.position.x = cube.position.x;
@@ -229,6 +240,7 @@ const terrainFactory = (options) => {
 }
 
 const worldFactory = options => {
+        console.log(options);
         const { robotOptions, terrainOptions, homeElement } = options;
 
         const scene = new THREE.Scene();
