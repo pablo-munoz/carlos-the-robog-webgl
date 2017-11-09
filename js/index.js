@@ -10,7 +10,8 @@ const world = worldFactory({
   scriptEditorElement: $userScriptEditor,
   terrainOptions: {
     terrainModel: flatTerrainModelGenerator(15, 15)
-  }
+  },
+  robotOptions: {imgPath: 'img/carlos.png'}
 });
 
 // An initial call to render is done so that the user can visualize the

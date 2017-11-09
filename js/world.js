@@ -84,7 +84,8 @@ const robotFactory = (options) => {
     radius: 1,
     density: 32,
     initialScale: 0.5,
-    initialColor: 0xff0000
+    initialColor: 0xff0000,
+    imgPath: ''
   });
 
   const {
@@ -94,7 +95,8 @@ const robotFactory = (options) => {
     initialY,
     initialZ,
     initialScale,
-    initialColor
+    initialColor,
+    imgPath
   } = options;
 
   let {
@@ -103,17 +105,25 @@ const robotFactory = (options) => {
 
   const geometry = new THREE.SphereGeometry(radius, density, density);
   geometry.scale(initialScale, initialScale, initialScale);
-
-  const material = new THREE.MeshBasicMaterial({ color: initialColor });
-  const robot = new THREE.Mesh(geometry, material);
-
-  robot.position.x = initialX;
-  robot.position.y = initialY;
-  robot.position.z = initialZ;
-
-  const addToScene = (scene) => {
-    scene.add(robot);
+  var material;
+  if (imgPath !== ''){
+    const loader =  new THREE.TextureLoader().load(imgPath, function(texture){
+          material = new THREE.MeshBasicMaterial({ map: texture});
+          texture.needsUpdate = true;
+          console.log(imgPath);  
+        }); 
+  }else{
+     material = new THREE.MeshBasicMaterial({ color: initialColor });
   }
+
+   const robot = new THREE.Mesh(geometry, material);
+   robot.position.x = initialX;
+   robot.position.y = initialY;
+   robot.position.z = initialZ;
+
+   const addToScene = scene => {
+     scene.add(robot);
+   };
 
   const turnLeft = () => {
     directionFacingAt = (directionFacingAt + 3) % 4;
@@ -177,7 +187,7 @@ const terrainFactory = (options) => {
 
   const terrainCubes = terrainModel.map((cubeCoords) => {
     const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    const material = new THREE.MeshBasicMaterial( { color: 0x0000ff } );
     const cube = new THREE.Mesh( geometry, material );
 
     const { x, y, z } = cubeCoords;
