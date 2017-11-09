@@ -1,0 +1,44 @@
+body {
+    margin-top: 3rem;
+    background-image: url('https://www.jpl.nasa.gov/assets/images/content/tmp/home/missions_bg_image.jpg');
+    background-color: black;
+}
+
+#canvas-area {
+    width: 600px;
+    height: 600px;
+}
+
+#controls{
+    margin: .5rem 0 1.5rem 0;
+}
+
+#controls>.btn{
+    margin-right: 10px;
+}
+
+h1{
+color: white;
+font-style: italic;
+margin-bottom: 3rem;
+}
+
+#numberLines{
+    background-color:rgb(240, 237, 237);
+    border-radius: .25rem 0 0 .25rem;
+    border-right: 1px solid gray;
+    padding-top: 6px;
+    height: 420px;
+    overflow-y: hidden;
+}
+
+#user-script-editor:focus{
+    outline-style:none;
+    box-shadow:none;
+    border-color:transparent;
+}
+
+#user-script-editor{
+    border-radius: 0 .25rem .25rem 0;
+    border: 0;
+}
