@@ -42,7 +42,14 @@ function traceProgram(instructions, currentIndex) {
 }
 
 $worldSelector.change(function(){
+  console.log('Inside selector');
   const newTerrainImg = $worldSelector.val();
+  world.update(
+    "terrain", 
+    {
+      terrainModel: flatTerrainModelGenerator(15, 15),
+      image: newTerrainImg
+    });
 });
 
 $userScriptForm.on('submit', (event) => {

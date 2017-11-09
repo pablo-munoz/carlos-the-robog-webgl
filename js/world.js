@@ -261,7 +261,7 @@ const worldFactory = options => {
         const robot = robotFactory(robotOptions);
         robot.addToScene(scene);
 
-        const terrain = terrainFactory(terrainOptions);
+        var terrain = terrainFactory(terrainOptions);
         terrain.addToScene(scene);
 
         const INSTRUCTION_SET = new WeakMap();
@@ -273,6 +273,22 @@ const worldFactory = options => {
 
         const render = () => {
           renderer.render(scene, camera);
+        };
+
+        const update = (obj, options) => {
+          console.log('Inside update');
+          switch(obj){
+            case 'terrain':
+              console.log("Inside Terrain");
+              scene.remove(terrain);
+              terrain = terrainFactory(options);
+              terrain.addToScene(scene);
+              render();
+              break;
+            default:
+              break;
+          }
+
         };
 
         let instructions = []; // The name of the instructions
@@ -368,5 +384,5 @@ const worldFactory = options => {
           currentInstructionArgs = instructions[0].slice(1);
         };
 
-        return Object.freeze({ render, compileUserScript, run });
+        return Object.freeze({ render, compileUserScript, run, update });
       };;
