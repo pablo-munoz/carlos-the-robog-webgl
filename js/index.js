@@ -1,15 +1,28 @@
 // Obtain reference to important DOM elements
 const canvasArea = document.getElementById('canvas-area');
+const $canvasArea = $(canvasArea);
 const $userScriptEditor = $('#user-script-editor');
 const $userScriptForm = $('#user-script-form');
 const $userScriptTracer = $('#user-script-tracer');
 const $runButton = $('#run-button');
+const $rotateCameraBtn = $('#rotate-camera-btn');
+const $translateCameraBtn = $('#translate-camera-btn');
 
 const world = worldFactory({
   homeElement: canvasArea,
   scriptEditorElement: $userScriptEditor,
+  robotOptions: {
+    initialX: 0,
+    initialY: 13,
+  },
   terrainOptions: {
-    terrainModel: flatTerrainModelGenerator(15, 15)
+    terrainModel: mazeTerrainModelGenerator(15, 15)
+  },
+  targetOptions: {
+    x: 14,
+    y: 0,
+    z: 1,
+    color: 0x0000ff
   }
 });
 
@@ -47,8 +60,64 @@ $userScriptForm.on('submit', (event) => {
   $userScriptForm.hide();
 
   if (!isAnimated) {
-    world.run(traceProgram);
-    isAnimated = true;
+
+    try {
+      world.run(traceProgram);
+      isAnimated = true;
+    } catch(error) {
+      if (error.code === 1) {
+        alert('The program crashed because you attempted to move the robot wrong.');
+      } else {
+        alert('The program crashed with an uknown error.');
+      }
+    }
+
   }
 
+});
+
+let clickClientX;
+let clickClientY;
+let dragging = false;
+let rotateEnabled = false;
+let translateEnabled = false;
+
+$rotateCameraBtn.on('click', function() {
+  translateEnabled = false;
+  rotateEnabled = true;
+});
+$translateCameraBtn.on('click', function() {
+  rotateEnabled = false;
+  translateEnabled = true;
+});
+
+$canvasArea.on('mousedown', function(event) {
+  dragging = true;
+  clickClientX = event.clientX;
+  clickClientY = event.clientY;
+});
+
+$canvasArea.on('dragover', function(event) {
+  let deltaX = event.clientX - clickClientX;
+  let deltaY = event.clientY - clickClientY;
+
+  if (rotateEnabled) {
+    if (dragging) {
+      world.rotateCamera('z', (deltaX/400) * 360);
+      world.rotateCamera('x', (deltaY/400) * 360);
+    }
+  } else if (translateEnabled) {
+    world.panCamera('x', -deltaX / 10);
+    world.panCamera('y', deltaY / 10);
+
+    clickClientX += deltaX;
+    clickClientY += deltaY;
+  }
+  world.render();
+});
+
+$canvasArea.on('mouseup', function(event) {
+  dragging = false;
+  clickClientX = 0;
+  clickClientY = 0;
 });
