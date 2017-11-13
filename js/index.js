@@ -11,7 +11,7 @@ var lineNumber = 1;
 const $rotateCameraBtn = $('#rotate-camera-btn');
 const $translateCameraBtn = $('#translate-camera-btn');
 
-const world = worldFactory({
+let world = worldFactory({
   homeElement: canvasArea,
   scriptEditorElement: $userScriptEditor,
   robotOptions: {
@@ -57,14 +57,45 @@ function traceProgram(instructions, currentIndex) {
 }
 
 $worldSelector.change(function(){
-  console.log('Inside selector');
-  const newTerrainImg = $worldSelector.val();
-  world.update(
-    "terrain", 
-    {
-      terrainModel: flatTerrainModelGenerator(15, 15),
-      image: newTerrainImg
-    });
+  /* console.log('Inside selector');*/
+  const terrainModel = $worldSelector.val();
+
+  let modelGenerator = mazeTerrainModelGenerator;
+
+  if (terrainModel === 'flatTerrainModelGenerator')
+    modelGenerator = flatTerrainModelGenerator
+
+  world.removeAll();
+  $(document.getElementById("canvas-area")).children().remove();
+
+  world = worldFactory({
+    homeElement: canvasArea,
+    scriptEditorElement: $userScriptEditor,
+    robotOptions: {
+      initialX: 0,
+      initialY: 13,
+      imgPath: "img/carlos.png"
+    },
+    terrainOptions: {
+      image: "img/rock.png",
+      terrainModel: modelGenerator(15, 15)
+    },
+    targetOptions: {
+      x: 14,
+      y: 0,
+      z: 1,
+      color: 0x0000ff
+    }
+  });
+
+  world.render();
+
+  /* world.update(
+   *   "terrain", 
+   *   {
+   *     terrainModel: flatTerrainModelGenerator(15, 15),
+   *     image: newTerrainImg
+   *   });*/
 });
 
 $userScriptEditor.on('focus change keyup paste',function(event){
@@ -85,7 +116,6 @@ $userScriptEditor.scroll(function(){
 
 $userScriptForm.on('submit', (event) => {
   event.preventDefault();
-  console.log('weeee');
 
   const userScript = $userScriptEditor.val();
   world.compileUserScript(userScript);

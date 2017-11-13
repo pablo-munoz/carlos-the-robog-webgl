@@ -765,11 +765,20 @@ const worldFactory = options => {
     camera.position[axis] += amount;
   };
 
+  const removeAll = () => {
+    scene.remove(robot);
+    scene.remove(terrain);
+    scene.remove(target);
+  }
+
   return Object.freeze({
     render,
     compileUserScript,
     run,
     rotateCamera,
-    panCamera
+    panCamera,
+    update,
+    scene,
+    removeAll
   });
 }
