@@ -17,9 +17,10 @@ const world = worldFactory({
   robotOptions: {
     initialX: 0,
     initialY: 13,
+    imgPath: "img/carlos.png"
   },
   terrainOptions: {
-     image: 'img/rock.png',
+    image: "img/rock.png",
     terrainModel: mazeTerrainModelGenerator(15, 15)
   },
   targetOptions: {
@@ -28,7 +29,6 @@ const world = worldFactory({
     z: 1,
     color: 0x0000ff
   }
-  robotOptions: {imgPath: 'img/carlos.png'}
 });
 
 // An initial call to render is done so that the user can visualize the
