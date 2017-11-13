@@ -78,10 +78,10 @@ const timeSmoothUnaryFunctionFactory = (unaryFunc, onlyArg, callback) => {
         amortizedUnaryArg += onlyArg * (millisecondsDelta / 1000);
         totalMilliseconds += millisecondsDelta;
       } else {
+        callback();
         totalMilliseconds = 1000;
         amortizedUnaryArg = onlyArg - amortizedUnaryArg;
         unaryFunc(amortizedUnaryArg);
-        callback();
       }
     };
   };
@@ -163,9 +163,11 @@ const robotFactory = options => {
 
   const turnRight = () => {
     directionFacingAt = (directionFacingAt + 3) % 4;
+    console.log('turnRight called');
   };
 
   const move = distance => {
+    console.log(directionFacingAt);
     switch (directionFacingAt) {
       case NORTH:
         robot.position.y += distance;
@@ -180,6 +182,14 @@ const robotFactory = options => {
         robot.position.x += distance;
         break;
     }
+  };
+
+  const rotateRight = (amount) => {
+    robot.rotation.z -= Math.PI * amount / 180;
+  };
+
+  const rotateLeft = (amount) => {
+    robot.rotation.z += Math.PI * amount / 180;
   };
 
   const getCurrentCoordinates = () => {
@@ -232,7 +242,6 @@ const robotFactory = options => {
   };
 
   const advancePosition = () => {
-    console.log("hihihi");
     switch (directionFacingAt) {
       case NORTH:
         y += 1;
@@ -260,7 +269,9 @@ const robotFactory = options => {
     isFacingWest,
     isFacingSouth,
     isFacingEast,
-    advancePosition
+    advancePosition,
+    rotateLeft,
+    rotateRight
   });
 };
 
@@ -365,7 +376,7 @@ const terrainFactory = options => {
     terrainModel,
     image
   } = options;
-  console.log(image);
+
   const terrainCubes = terrainModel.map(cubeCoords => {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     var material;
@@ -429,9 +440,6 @@ const terrainFactory = options => {
 
   const canRobotStepOn = coordinates => {
     // First the coordinates to consider to move to must not be blocked
-    console.log(
-      doesCubeExistAt(Object.assign({}, coordinates, { z: coordinates.z - 1 }))
-    );
     return (
       !doesCubeExistAt(coordinates) &&
       // and there must be a floor
@@ -481,7 +489,6 @@ const worldFactory = options => {
 
   const isFrontOfRobotBlocked = () => {
     const positionInFrontOfRobot = robot.getCoordinatesInFront();
-    console.log(positionInFrontOfRobot);
     return !terrain.canRobotStepOn(positionInFrontOfRobot);
   };
 
@@ -524,10 +531,17 @@ const worldFactory = options => {
     1,
     robot.advancePosition
   );
-  INSTRUCTION_SET[TURN_RIGHT] = callableOnlyOnceFunctionFactory(
-    robot.turnRight
-  );
-  INSTRUCTION_SET[TURN_LEFT] = callableOnlyOnceFunctionFactory(robot.turnLeft);
+
+  INSTRUCTION_SET[TURN_RIGHT] = timeSmoothUnaryFunctionFactory(
+    robot.rotateRight, 90, robot.turnRight);
+
+  INSTRUCTION_SET[TURN_LEFT] = timeSmoothUnaryFunctionFactory(
+    robot.rotateLeft, 90, robot.turnLeft);
+
+  /* INSTRUCTION_SET[TURN_RIGHT] = callableOnlyOnceFunctionFactory(
+   *   robot.turnRight
+   * );
+   * INSTRUCTION_SET[TURN_LEFT] = callableOnlyOnceFunctionFactory(robot.turnLeft);*/
 
   INSTRUCTION_SET[ROBOT_IS_FACING_NORTH] = () => robot.isFacingNorth();
   INSTRUCTION_SET[ROBOT_IS_FACING_WEST] = () => robot.isFacingWest();
@@ -546,7 +560,6 @@ const worldFactory = options => {
       insideWhile = true;
       whileInstructionIndex = programCounter;
     } else {
-      insideWhile = false;
       whileInstructionIndex = undefined;
 
       // Jump to the next instruction after the matching 'ENDWHILE'
@@ -644,10 +657,8 @@ const worldFactory = options => {
   }
 
   const update = (obj, options) => {
-    console.log("Inside update");
     switch (obj) {
       case "terrain":
-        console.log("Inside Terrain");
         scene.remove(terrain);
         terrain = terrainFactory(options);
         terrain.addToScene(scene);
@@ -658,7 +669,7 @@ const worldFactory = options => {
     }
   }
 
-  const run = callback => {
+  const run = (callback) => {
     // Begins the animation loop of the world.
     //
     // callback is a function that will be called at the end of each
@@ -691,125 +702,74 @@ const worldFactory = options => {
     // In order to reduce complexity, we will utilize higher order functions
     // to create stateful, animation frame aware instructions. See the
     // Higher order functions section for more iformation. But basically
-    //
+    // 
     // This function assumes compileUserScript() has been called successfully
 
-    let instructions = []; // The name of the instructions
-    let programCounter = -1; // The index of the instruction being executed
-    let currentInstruction = _.noop;
-    let currentInstructionArgs = [];
+    let millisecondsInCurrentPeriod = 0;
+    let then = new Date().getTime();
 
-    const run = callback => {
-      // Begins the animation loop of the world.
-      //
-      // callback is a function that will be called at the end of each
-      //   1 second period and will be given the names of the instructions being
-      //   executed and the index of the one that is currently being executed.
-      //
-      //
-      // In order to improve visualization, we have determined that each program
-      // instruction will take 1 second to complete (in the future we could make this
-      // a configurable --speed-- value). This poses some challenges.
-      // For example, one action can be "move an object one unit forward", so
-      // during each frame within the 1 second period that corresponds to the
-      // action, we want to move the distance proportional to the time that has
-      // passed since the last frame, e.g., if this frame is 16 milliseconds after
-      // the one before it, the graphics are 16 milliseconds out of date, and we
-      // should move the object forward by 16/1000 of the total distance it will move.
-      //
-      // It has been established that the program instructions will need to consume
-      // the time that has passed since the previous frame so that they may act
-      // proportionally.
-      //
-      // There is also the issue that not all program instructions can be "amortized"
-      // during a time period. For example, the "turn right" instruction happens
-      // instantly, and it would be an error to keep calling the turnRight method
-      // as many times as there are frames in the 1 second that belongs to the
-      // instruction, as we may end facing in some other direction, so there is
-      // a subset of actions that we want to be executed only in the first frame
-      // of their one second period, and do nothing in the rest.
-      //
-      // In order to reduce complexity, we will utilize higher order functions
-      // to create stateful, animation frame aware instructions. See the
-      // Higher order functions section for more iformation. But basically
-      //
-      // This function assumes compileUserScript() has been called successfully
+    const animate = () => {
+      requestAnimationFrame(animate);
 
-      let millisecondsInCurrentPeriod = 0;
-      let then = new Date().getTime();
+      let now = new Date().getTime();
+      let millisecondsDelta = now - then;
 
-      const animate = () => {
-        requestAnimationFrame(animate);
+      currentInstruction(millisecondsDelta, currentInstructionArgs);
 
-        let now = new Date().getTime();
-        let millisecondsDelta = now - then;
+      millisecondsInCurrentPeriod += millisecondsDelta;
 
-        currentInstruction(millisecondsDelta, currentInstructionArgs);
+      const isTimeToMoveToNextInstruction = millisecondsInCurrentPeriod > 1000;
 
-        if (isTimeToMoveToNextInstruction) {
-          const isTimeToMoveToNextInstruction =
-            millisecondsInCurrentPeriod > 1000;
+      if (isTimeToMoveToNextInstruction) {
 
-          if (isLastInstruction) {
-            currentInstruction = _.noop;
-          } else {
-            programCounter = programCounter + 1;
-            currentInstruction = INSTRUCTION_SET[
-              instructions[programCounter][0]
-            ]();
-            currentInstructionArgs = instructions[programCounter].slice(1);
-            callback(instructions, programCounter);
-          }
-
-          millisecondsInCurrentPeriod = 0;
-        }
-
-        const isLastInstruction = programCounter === instructions.length - 1;
+        const isLastInstruction = programCounter === (instructions.length - 1);
 
         if (isLastInstruction) {
           currentInstruction = _.noop;
         } else {
           programCounter = programCounter + 1;
-          currentInstruction = INSTRUCTION_SET[
-            instructions[programCounter][0]
-          ]();
+          currentInstruction = INSTRUCTION_SET[instructions[programCounter][0]]();
           currentInstructionArgs = instructions[programCounter].slice(1);
           callback(instructions, programCounter);
         }
-      };
+
+        millisecondsInCurrentPeriod = 0;
+      }
 
       then = now;
 
-      const compileUserScript = userScript => {
-        // Assumes one command per line, all lines contain commands.
-        instructions = userScript.split("\n").map(statement => {
-          const trimmedStatement = statement.trim();
-          return trimmedStatement.split(" ");
-        });
+      render();
+    }
 
-        callback(instructions, 0);
-        animate();
-      };
-
-      currentInstructionName = instructions[0][0];
-      currentInstruction = INSTRUCTION_SET[instructions[0][0]]();
-      currentInstructionArgs = instructions[0].slice(1);
-    };
-
-    const rotateCamera = (axis, angleAfterRotation) => {
-      camera.rotation[axis] = angleAfterRotation * Math.PI / 180;
-    };
-
-    const panCamera = (axis, amount) => {
-      camera.position[axis] += amount;
-    };
-
-    return Object.freeze({
-      render,
-      compileUserScript,
-      run,
-      rotateCamera,
-      panCamera
-    });
+    callback(instructions, 0);
+    animate();
   }
+
+  const compileUserScript = userScript => {
+    // Assumes one command per line, all lines contain commands.
+    instructions = userScript.split("\n").map(statement => {
+      const trimmedStatement = statement.trim();
+      return trimmedStatement.split(" ");
+    });
+
+    currentInstructionName = instructions[0][0];
+    currentInstruction = INSTRUCTION_SET[instructions[0][0]]();
+    currentInstructionArgs = instructions[0].slice(1);
+  };
+
+  const rotateCamera = (axis, angleAfterRotation) => {
+    camera.rotation[axis] = angleAfterRotation * Math.PI / 180;
+  };
+
+  const panCamera = (axis, amount) => {
+    camera.position[axis] += amount;
+  };
+
+  return Object.freeze({
+    render,
+    compileUserScript,
+    run,
+    rotateCamera,
+    panCamera
+  });
 }

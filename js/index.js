@@ -85,6 +85,7 @@ $userScriptEditor.scroll(function(){
 
 $userScriptForm.on('submit', (event) => {
   event.preventDefault();
+  console.log('weeee');
 
   const userScript = $userScriptEditor.val();
   world.compileUserScript(userScript);
